@@ -5,7 +5,8 @@ import SwiftUI
 enum BookBadgeStatus {
     case available                  // Rafta
     case borrowed                   // Ödünçte
-    case overdue(days: Int)         // N gün gecikti
+    case overdue(days: Int)         // "N gün gecikti" — detay ekranları
+    case overdueShort               // "Gecikti" — liste satırı (gün sayısı yok)
 }
 
 struct StatusBadge: View {
@@ -16,22 +17,23 @@ struct StatusBadge: View {
         case .available:          return "Rafta"
         case .borrowed:           return "Ödünçte"
         case .overdue(let days):  return "\(days) gün gecikti"
+        case .overdueShort:       return "Gecikti"
         }
     }
 
     private var textColor: Color {
         switch status {
-        case .available:  return .appOkText
-        case .borrowed:   return .appNeutText
-        case .overdue:    return .appWarnText
+        case .available:                  return .appOkText
+        case .borrowed:                   return .appNeutText
+        case .overdue, .overdueShort:     return .appWarnText
         }
     }
 
     private var bgColor: Color {
         switch status {
-        case .available:  return .appOkBg
-        case .borrowed:   return .appNeutBg
-        case .overdue:    return .appWarnBg
+        case .available:                  return .appOkBg
+        case .borrowed:                   return .appNeutBg
+        case .overdue, .overdueShort:     return .appWarnBg
         }
     }
 
@@ -45,15 +47,19 @@ struct StatusBadge: View {
     }
 }
 
-// Book.status + opsiyonel gecikme günü → StatusBadge dönüştürücü
+// Book.status + opsiyonel gecikme günü → StatusBadge dönüştürücü.
+// `compactOverdue=true` → liste satırı: "Gecikti" (gün sayısız).
+// Detay ekranları false bırakır → "N gün gecikti".
 extension StatusBadge {
-    init(bookStatus: BookStatus, overdueDays: Int? = nil) {
+    init(bookStatus: BookStatus,
+         overdueDays: Int? = nil,
+         compactOverdue: Bool = false) {
         switch bookStatus {
         case .available:
             status = .available
         case .borrowed:
             if let days = overdueDays, days > 0 {
-                status = .overdue(days: days)
+                status = compactOverdue ? .overdueShort : .overdue(days: days)
             } else {
                 status = .borrowed
             }

@@ -16,6 +16,8 @@ final class MockBookRepository: BookRepository {
         }
     }
 
+    func fetchAllBooks() async throws -> [Book] { books }
+
     func fetchBook(id: String) async throws -> Book {
         guard let book = books.first(where: { $0.id == id }) else {
             throw RepositoryError.notFound

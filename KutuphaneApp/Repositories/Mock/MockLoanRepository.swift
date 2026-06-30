@@ -14,6 +14,8 @@ final class MockLoanRepository: LoanRepository {
         }
     }
 
+    func fetchAllLoans() async throws -> [Loan] { loans }
+
     func activeLoans(forMember memberId: String) async throws -> [Loan] {
         loans.filter { $0.memberId == memberId && $0.isActive }
     }

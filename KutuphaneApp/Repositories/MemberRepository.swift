@@ -5,6 +5,8 @@ import FirebaseFirestore
 
 protocol MemberRepository {
     func observeMembers() -> AsyncStream<[Member]>
+    /// Pull-to-refresh için tek seferlik fetch.
+    func fetchAllMembers() async throws -> [Member]
     func fetchMember(id: String) async throws -> Member
     func findByNumber(_ number: String) async throws -> Member?
     func addMember(_ member: Member) async throws
@@ -28,6 +30,11 @@ final class FirestoreMemberRepository: MemberRepository {
                 }
             continuation.onTermination = { _ in listener.remove() }
         }
+    }
+
+    func fetchAllMembers() async throws -> [Member] {
+        let snap = try await collection.getDocuments()
+        return snap.documents.compactMap { try? $0.data(as: Member.self) }
     }
 
     func fetchMember(id: String) async throws -> Member {

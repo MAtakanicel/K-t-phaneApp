@@ -122,7 +122,7 @@ struct LendingSheet: View {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(Color.appWarnText)
-                Text("\(member.fullName) üzerinde 3 kitap var — ödünç verilemiyor.")
+                Text("\(member.fullName) üzerinde \(LendingSettings.current.loanLimit) kitap var — ödünç verilemiyor.")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.appWarnText)
             }

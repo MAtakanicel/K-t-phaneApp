@@ -22,7 +22,9 @@ enum LendingError: Error, LocalizedError {
 // MARK: - Protokol
 
 protocol LendingService {
-    func borrow(bookId: String, memberId: String) async throws
+    /// `settings` çağrı anındaki Ayarlar snapshot'ı (limit + süre).
+    /// D6: Hesaplar tek kaynaktan akar; servis kendi sabitlerini taşımaz.
+    func borrow(bookId: String, memberId: String, settings: LendingSettings) async throws
     func returnBook(bookId: String) async throws
 }
 
@@ -36,10 +38,10 @@ final class FirestoreLendingService: LendingService {
         self.loanRepo = loanRepo
     }
 
-    func borrow(bookId: String, memberId: String) async throws {
+    func borrow(bookId: String, memberId: String, settings: LendingSettings) async throws {
         // Adım 1: Üye limiti kontrolü (transaction dışında — tek görevli için güvenli)
         let active = try await loanRepo.activeLoans(forMember: memberId)
-        guard active.count < 3 else { throw LendingError.memberLimitReached }
+        guard active.count < settings.loanLimit else { throw LendingError.memberLimitReached }
 
         // Adım 2: Transaction — kitap müsaitliği + atomik yazma + snapshot alanları
         let bookRef   = db.collection("books").document(bookId)
@@ -47,7 +49,7 @@ final class FirestoreLendingService: LendingService {
         let loanRef   = db.collection("loans").document()
         let loanId    = loanRef.documentID
         let now       = Date()
-        let dueDate   = Calendar.current.date(byAdding: .day, value: 15, to: now) ?? now
+        let dueDate   = settings.dueDate(from: now)
 
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             db.runTransaction({ transaction, errPtr -> Any? in
@@ -150,9 +152,9 @@ final class MockLendingService: LendingService {
         self.loanRepo = loanRepo
     }
 
-    func borrow(bookId: String, memberId: String) async throws {
+    func borrow(bookId: String, memberId: String, settings: LendingSettings) async throws {
         let active = try await loanRepo.activeLoans(forMember: memberId)
-        guard active.count < 3 else { throw LendingError.memberLimitReached }
+        guard active.count < settings.loanLimit else { throw LendingError.memberLimitReached }
 
         guard var book = try? await bookRepo.fetchBook(id: bookId) else {
             throw LendingError.bookNotFound
@@ -161,7 +163,7 @@ final class MockLendingService: LendingService {
         let member = try? await memberRepo.fetchMember(id: memberId)
 
         let now = Date()
-        let dueDate = Calendar.current.date(byAdding: .day, value: 15, to: now) ?? now
+        let dueDate = settings.dueDate(from: now)
         let loanId = UUID().uuidString
 
         book.status = .borrowed

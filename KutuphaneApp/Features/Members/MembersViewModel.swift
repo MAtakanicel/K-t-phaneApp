@@ -55,11 +55,30 @@ final class MembersViewModel {
 
     private func observeLoansStream() async {
         for await allLoans in loanRepo.observeLoans() {
-            var counts: [String: Int] = [:]
-            for loan in allLoans where loan.isActive {
-                counts[loan.memberId, default: 0] += 1
-            }
-            loanCounts = counts
+            loanCounts = Self.buildLoanCounts(allLoans)
         }
+    }
+
+    // MARK: - Pull-to-refresh
+
+    func refresh() async {
+        errorMessage = nil
+        do {
+            async let membersTask = memberRepo.fetchAllMembers()
+            async let loansTask = loanRepo.fetchAllLoans()
+            let (newMembers, newLoans) = try await (membersTask, loansTask)
+            members = newMembers
+            loanCounts = Self.buildLoanCounts(newLoans)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private static func buildLoanCounts(_ all: [Loan]) -> [String: Int] {
+        var counts: [String: Int] = [:]
+        for loan in all where loan.isActive {
+            counts[loan.memberId, default: 0] += 1
+        }
+        return counts
     }
 }

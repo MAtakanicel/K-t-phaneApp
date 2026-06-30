@@ -4,6 +4,7 @@ import Foundation
 @Observable
 final class BooksViewModel {
     var books: [Book] = []
+    var activeLoanByBookId: [String: Loan] = [:]   // D6/§7.3: Özet ile aynı kaynak
     var searchText: String = ""
     var filterIndex: Int = 0    // 0=Hepsi 1=Rafta 2=Ödünçte
     var isLoading: Bool = true
@@ -11,9 +12,11 @@ final class BooksViewModel {
     var showingAddForm: Bool = false
 
     let bookRepo: any BookRepository
+    private let loanRepo: any LoanRepository
 
-    init(bookRepo: any BookRepository) {
+    init(bookRepo: any BookRepository, loanRepo: any LoanRepository) {
         self.bookRepo = bookRepo
+        self.loanRepo = loanRepo
     }
 
     // MARK: - Türetilmiş liste (D6: filtre/arama runtime'da hesaplanır)
@@ -34,24 +37,61 @@ final class BooksViewModel {
         }
     }
 
-    // D6: gecikme günü runtime'da hesaplanır, modele yazılmaz
+    // D6/§7.3: Gecikme tek kaynaktan — aktif loan'ın borrowDate'i + Ayarlar.süresi.
+    // Özet ekranıyla aynı hesap; book.borrowedDate fallback kullanılmaz.
     func overdueDays(for book: Book) -> Int? {
         guard book.status == .borrowed,
-              let borrowedDate = book.borrowedDate else { return nil }
-        let due = Calendar.current.date(byAdding: .day, value: 15, to: borrowedDate) ?? borrowedDate
-        let days = Calendar.current.dateComponents([.day], from: due, to: .now).day ?? 0
-        return days > 0 ? days : nil
+              let id = book.id,
+              let loan = activeLoanByBookId[id] else { return nil }
+        return LendingSettings.current.overdueDays(from: loan.borrowDate)
     }
 
     // MARK: - Gözlem (Firestore snapshot listener canlı yayın)
-    // SwiftUI .task'ı doğrudan for-await yapar; cancellation otomatik yönetilir.
+    // books + loans paralel dinlenir; loans tek seferde çekilip bookId'e göre
+    // map'lenir → satır başına ayrı sorgu yok.
 
     func observe() async {
         isLoading = true
         errorMessage = nil
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { [weak self] in await self?.observeBooksStream() }
+            group.addTask { [weak self] in await self?.observeLoansStream() }
+        }
+    }
+
+    private func observeBooksStream() async {
         for await newBooks in bookRepo.observeBooks() {
             books = newBooks
             isLoading = false
         }
+    }
+
+    private func observeLoansStream() async {
+        for await allLoans in loanRepo.observeLoans() {
+            activeLoanByBookId = Self.buildActiveLoanMap(allLoans)
+        }
+    }
+
+    // MARK: - Pull-to-refresh
+    // Tek seferlik fetch — snapshot listener cache'inden bağımsız Firestore server sorgusu.
+    // Books + loans paralel; loans map'i Özet ile aynı türetimle yeniden kurulur.
+
+    func refresh() async {
+        errorMessage = nil
+        do {
+            async let booksTask = bookRepo.fetchAllBooks()
+            async let loansTask = loanRepo.fetchAllLoans()
+            let (newBooks, newLoans) = try await (booksTask, loansTask)
+            books = newBooks
+            activeLoanByBookId = Self.buildActiveLoanMap(newLoans)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private static func buildActiveLoanMap(_ all: [Loan]) -> [String: Loan] {
+        var map: [String: Loan] = [:]
+        for loan in all where loan.isActive { map[loan.bookId] = loan }
+        return map
     }
 }

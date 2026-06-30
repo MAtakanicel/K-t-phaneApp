@@ -48,11 +48,10 @@ final class MemberDetailViewModel {
     var loanCount: Int { activeItems.count }
     var canDelete: Bool { activeItems.isEmpty }
 
-    // Gecikme günü loan.dueDate'ten runtime'da hesaplanır
+    // D6: Faz 8 — gecikme tek kaynaktan (Ayarlar) borrowDate + süre üzerinden hesaplanır.
+    // Loan.dueDate'i okumuyoruz; ayar değişince geçmiş/aktif loan'lar tutarlı görünüyor.
     func overdueDays(for loan: Loan) -> Int? {
-        guard let due = loan.dueDate else { return nil }
-        let days = Calendar.current.dateComponents([.day], from: due, to: .now).day ?? 0
-        return days > 0 ? days : nil
+        LendingSettings.current.overdueDays(from: loan.borrowDate)
     }
 
     // MARK: - Yükleme

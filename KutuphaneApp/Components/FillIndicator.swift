@@ -1,9 +1,10 @@
 import SwiftUI
 
-// §5.2 — Üye doluluk göstergesi (x/3). Limit doluyken kırmızı.
+// §5.2 — Üye doluluk göstergesi (x/limit). Limit doluyken kırmızı.
+// Limit varsayılanı Ayarlar'daki anlık değerden gelir (D6).
 struct FillIndicator: View {
     let count: Int
-    var limit: Int = 3
+    var limit: Int = LendingSettings.current.loanLimit
 
     private var isFull: Bool { count >= limit }
 

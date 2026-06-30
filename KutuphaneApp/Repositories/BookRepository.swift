@@ -20,6 +20,8 @@ enum RepositoryError: Error, LocalizedError {
 protocol BookRepository {
     /// Canlı dinleyici; snapshot her değiştiğinde yeni dizi yayınlar.
     func observeBooks() -> AsyncStream<[Book]>
+    /// Pull-to-refresh için tek seferlik fetch (Firestore server fetch).
+    func fetchAllBooks() async throws -> [Book]
     func fetchBook(id: String) async throws -> Book
     func addBook(_ book: Book) async throws
     func updateBook(_ book: Book) async throws
@@ -43,6 +45,11 @@ final class FirestoreBookRepository: BookRepository {
                 }
             continuation.onTermination = { _ in listener.remove() }
         }
+    }
+
+    func fetchAllBooks() async throws -> [Book] {
+        let snap = try await collection.getDocuments()
+        return snap.documents.compactMap { try? $0.data(as: Book.self) }
     }
 
     func fetchBook(id: String) async throws -> Book {

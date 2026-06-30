@@ -6,6 +6,8 @@ import FirebaseFirestore
 protocol LoanRepository {
     /// Tüm loans koleksiyonunu canlı dinler — Üye listesi loan sayılarını güncel tutmak için.
     func observeLoans() -> AsyncStream<[Loan]>
+    /// Pull-to-refresh için tek seferlik fetch.
+    func fetchAllLoans() async throws -> [Loan]
     /// Üyenin aktif (iade edilmemiş) ödünçleri — limit kontrolünde kullanılır.
     func activeLoans(forMember memberId: String) async throws -> [Loan]
     func loanHistory(forMember memberId: String) async throws -> [Loan]
@@ -28,6 +30,11 @@ final class FirestoreLoanRepository: LoanRepository {
                 }
             continuation.onTermination = { _ in listener.remove() }
         }
+    }
+
+    func fetchAllLoans() async throws -> [Loan] {
+        let snap = try await collection.getDocuments()
+        return snap.documents.compactMap { try? $0.data(as: Loan.self) }
     }
 
     func activeLoans(forMember memberId: String) async throws -> [Loan] {

@@ -3,7 +3,10 @@ import SwiftUI
 // MARK: - Üretim entry point (Firestore repo)
 
 struct BooksTab: View {
-    @State private var vm = BooksViewModel(bookRepo: FirestoreBookRepository())
+    @State private var vm = BooksViewModel(
+        bookRepo: FirestoreBookRepository(),
+        loanRepo: FirestoreLoanRepository()
+    )
 
     var body: some View {
         BooksScreen(vm: vm)
@@ -114,8 +117,12 @@ struct BooksScreen: View {
             .background(Color.appBg)
 
             if vm.filteredBooks.isEmpty {
-                emptyView
-                    .frame(maxHeight: .infinity)
+                ScrollView {
+                    emptyView
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 360)
+                }
+                .refreshable { await vm.refresh() }
             } else {
                 List {
                     ForEach(vm.filteredBooks) { book in
@@ -129,6 +136,7 @@ struct BooksScreen: View {
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
+                .refreshable { await vm.refresh() }
             }
         }
     }
@@ -158,7 +166,7 @@ struct BooksScreen: View {
 
 #Preview("Liste — dolu") {
     BooksScreen(vm: {
-        let vm = BooksViewModel(bookRepo: MockBookRepository())
+        let vm = BooksViewModel(bookRepo: MockBookRepository(), loanRepo: MockLoanRepository())
         vm.isLoading = false
         return vm
     }())
@@ -166,19 +174,19 @@ struct BooksScreen: View {
 
 #Preview("Liste — boş") {
     BooksScreen(vm: {
-        let vm = BooksViewModel(bookRepo: MockBookRepository(books: []))
+        let vm = BooksViewModel(bookRepo: MockBookRepository(books: []), loanRepo: MockLoanRepository(loans: []))
         vm.isLoading = false
         return vm
     }())
 }
 
 #Preview("Yükleniyor") {
-    BooksScreen(vm: BooksViewModel(bookRepo: MockBookRepository()))
+    BooksScreen(vm: BooksViewModel(bookRepo: MockBookRepository(), loanRepo: MockLoanRepository()))
 }
 
 #Preview("Karanlık") {
     BooksScreen(vm: {
-        let vm = BooksViewModel(bookRepo: MockBookRepository())
+        let vm = BooksViewModel(bookRepo: MockBookRepository(), loanRepo: MockLoanRepository())
         vm.isLoading = false
         return vm
     }())

@@ -28,13 +28,10 @@ final class BookDetailViewModel {
         self.lendingService = lendingService
     }
 
-    // D6: gecikme günü runtime türetilir
+    // D6: gecikme günü runtime türetilir; süre Ayarlar'dan gelir.
     var overdueDays: Int? {
-        guard book.status == .borrowed,
-              let borrowed = book.borrowedDate else { return nil }
-        let due = Calendar.current.date(byAdding: .day, value: 15, to: borrowed) ?? borrowed
-        let days = Calendar.current.dateComponents([.day], from: due, to: .now).day ?? 0
-        return days > 0 ? days : nil
+        guard book.status == .borrowed else { return nil }
+        return LendingSettings.current.overdueDays(from: book.borrowedDate)
     }
 
     var badgeStatus: BookBadgeStatus {

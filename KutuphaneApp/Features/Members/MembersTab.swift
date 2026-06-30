@@ -62,7 +62,12 @@ struct MembersScreen: View {
         } else if let msg = vm.errorMessage {
             ErrorView(message: msg) { Task { await vm.observe() } }
         } else if vm.filteredMembers.isEmpty {
-            emptyView.frame(maxHeight: .infinity)
+            ScrollView {
+                emptyView
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 360)
+            }
+            .refreshable { await vm.refresh() }
         } else {
             memberList
         }
@@ -83,6 +88,7 @@ struct MembersScreen: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .refreshable { await vm.refresh() }
     }
 
     // MARK: - Boş durum (D4)

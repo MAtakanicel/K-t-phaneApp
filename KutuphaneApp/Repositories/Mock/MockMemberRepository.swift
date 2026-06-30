@@ -16,6 +16,8 @@ final class MockMemberRepository: MemberRepository {
         }
     }
 
+    func fetchAllMembers() async throws -> [Member] { members }
+
     func fetchMember(id: String) async throws -> Member {
         guard let member = members.first(where: { $0.id == id }) else {
             throw RepositoryError.notFound

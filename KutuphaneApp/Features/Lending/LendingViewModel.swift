@@ -74,7 +74,7 @@ final class LendingViewModel: Identifiable {
     func selectMember(_ member: Member) {
         guard let id = member.id else { return }
         let count = loanCounts[id] ?? 0
-        if count >= 3 {
+        if count >= LendingSettings.current.loanLimit {
             state = .limitReached(member: member)
         } else {
             state = .confirming(member: member)
@@ -88,8 +88,9 @@ final class LendingViewModel: Identifiable {
 
     // MARK: - Onayla
 
+    // D6: Faz 8 — iade tarihi Ayarlar.loanDurationDays üzerinden tek kaynaktan türetilir.
     var dueDate: Date {
-        Calendar.current.date(byAdding: .day, value: 15, to: .now) ?? .now
+        LendingSettings.current.dueDate(from: .now)
     }
 
     func confirm() async throws {
@@ -98,6 +99,8 @@ final class LendingViewModel: Identifiable {
               let bookId = book.id else { return }
         isConfirming = true
         defer { isConfirming = false }
-        try await lendingService.borrow(bookId: bookId, memberId: memberId)
+        try await lendingService.borrow(bookId: bookId,
+                                        memberId: memberId,
+                                        settings: LendingSettings.current)
     }
 }
