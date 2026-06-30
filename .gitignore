@@ -1,0 +1,76 @@
+# ---------------------------------------------
+# Kütüphane Stok Takip — .gitignore
+# Swift / Xcode / iOS + Firebase + SPM
+# ---------------------------------------------
+
+# === Claude plan/döküman klasörü (repoya gitmesin) ===
+claude/
+**/claude/
+
+# === macOS ===
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# === Xcode kullanıcı ayarları & türetilmiş veriler ===
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+DerivedData/
+build/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Xcode workspace (paylaşılan şema kalsın, kullanıcıya özel gitmesin)
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# === Swift Package Manager ===
+.build/
+.swiftpm/
+Package.resolved
+
+# Not: Package.resolved'ı bilerek hariç tutmuyorsan (sürüm kilidi paylaşmak
+# istersen) yukarıdaki satırı silebilirsin. Tek geliştiriciyle çalışırken
+# hariç tutmak sorunsuz.
+
+# === CocoaPods (kullanıyorsan) ===
+Pods/
+*.xcworkspace
+# (SPM kullanıyorsan bu blok gereksiz; CocoaPods yoksa silebilirsin.)
+
+# === Carthage (kullanıyorsan) ===
+Carthage/Build/
+
+# === Firebase — gizli/yerel yapılandırma ===
+# GoogleService-Info.plist API anahtarı içerir; herkese açık repoya koyma.
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+
+# Firebase CLI / emülatör çıktıları
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# === Ortam / gizli dosyalar ===
+*.env
+.env.*
+Secrets.xcconfig
+
+# === Çeşitli ===
+*.log
+*.swp
+*~.nib
+timeline.xctimeline
+playground.xcworkspace
