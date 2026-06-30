@@ -163,7 +163,7 @@ struct MemberDetailView: View {
         let dateColor: Color = overdue != nil ? .appWarnText : .appSecondary
 
         return HStack(spacing: 12) {
-            CoverPlaceholder.compact(title: item.book.title)
+            BookCover.compact(title: item.book.title, coverURL: item.book.coverImageURL)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.book.title)

@@ -14,19 +14,16 @@ import UIKit
 
 enum ScannerMode {
     case isbn
-    case memberCard
 
     var title: String {
         switch self {
-        case .isbn:       return "ISBN okutun"
-        case .memberCard: return "Üye kartı okutun"
+        case .isbn: return "ISBN okutun"
         }
     }
 
     var hint: String {
         switch self {
-        case .isbn:       return "Kitabın barkodunu çerçeveye yerleştir."
-        case .memberCard: return "Üye kartının barkodunu çerçeveye yerleştir."
+        case .isbn: return "Kitabın barkodunu çerçeveye yerleştir."
         }
     }
 }
@@ -307,8 +304,6 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
         switch mode {
         case .isbn:
             symbologies = [.barcode(symbologies: [.ean13, .ean8])]
-        case .memberCard:
-            symbologies = [.barcode(symbologies: [.ean13, .ean8, .code128, .code39, .qr])]
         }
 
         let scanner = DataScannerViewController(
@@ -374,8 +369,8 @@ struct DataScannerRepresentable: UIViewControllerRepresentable {
     ScannerPreviewWrapper(mode: .isbn, simulate: .denied)
 }
 
-#Preview("Üye kartı — hata") {
-    ScannerPreviewWrapper(mode: .memberCard, simulate: .deviceError)
+#Preview("ISBN — cihaz hatası") {
+    ScannerPreviewWrapper(mode: .isbn, simulate: .deviceError)
 }
 
 #Preview("ISBN — overlay") {

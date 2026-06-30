@@ -5,6 +5,7 @@ struct BookFormView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteAlert = false
     @State private var showingScanner = false
+    @FocusState private var isISBNFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,11 @@ struct BookFormView: View {
                         ) {
                             showingScanner = true
                         }
+                        .focused($isISBNFocused)
+                        .keyboardType(.numbersAndPunctuation)
+                        .submitLabel(.done)
+                        .onSubmit { triggerLookupIfValid() }
+                        lookupHintRow
                         FormTextField(label: "Kategori", text: $vm.category,
                                       placeholder: "Roman, Bilim Kurgu…")
                         FormTextField(label: "Raf", text: $vm.shelfLocation,
@@ -48,6 +54,9 @@ struct BookFormView: View {
                     }
                 }
                 .scrollContentBackground(.hidden)
+            }
+            .onChange(of: isISBNFocused) { _, focused in
+                if !focused { triggerLookupIfValid() }
             }
             .navigationTitle(vm.isEditing ? "Kitabı Düzenle" : "Kitap Ekle")
             .navigationBarTitleDisplayMode(.inline)
@@ -92,10 +101,54 @@ struct BookFormView: View {
             .fullScreenCover(isPresented: $showingScanner) {
                 ScannerView(mode: .isbn) { code in
                     vm.isbn = code
+                    vm.lookupISBN()
                 }
             }
         }
         .presentationDragIndicator(.visible)
+    }
+
+    // Geçerli ISBN uzunluğu: 13 hane (EAN-13) veya 10 hane (ISBN-10; X bitebilir).
+    private func triggerLookupIfValid() {
+        let digits = vm.isbn.filter { $0.isNumber || $0 == "X" || $0 == "x" }
+        guard digits.count == 10 || digits.count == 13 else { return }
+        vm.lookupISBN()
+    }
+
+    // §5.4 — "✓ Google Books'tan dolduruldu" ipucu satırı + D4 düşüşleri
+    @ViewBuilder
+    private var lookupHintRow: some View {
+        if vm.isLookingUp {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small).tint(Color.appAccent)
+                Text("Google Books'tan aranıyor…")
+                    .font(.caption)
+                    .foregroundStyle(Color.appSecondary)
+                Spacer()
+            }
+        } else if let hint = vm.lookupHint {
+            HStack(spacing: 8) {
+                Image(systemName: hint == .filled ? "checkmark.circle.fill"
+                                                  : "exclamationmark.circle")
+                    .foregroundStyle(hint == .filled ? Color.appOkText : Color.appSecondary)
+                Text(hint.message)
+                    .font(.caption)
+                    .foregroundStyle(hint == .filled ? Color.appOkText : Color.appSecondary)
+                Spacer()
+            }
+        } else {
+            EmptyView()
+        }
+    }
+}
+
+private extension BookFormViewModel.LookupHint {
+    var message: String {
+        switch self {
+        case .filled:       return "Google Books'tan dolduruldu"
+        case .notFound:     return "Sonuç bulunamadı, elle girebilirsin."
+        case .networkError: return "Şu an kitap bilgisi alınamıyor, elle girebilirsiniz."
+        }
     }
 }
 

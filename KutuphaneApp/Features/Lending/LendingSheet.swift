@@ -3,7 +3,6 @@ import SwiftUI
 struct LendingSheet: View {
     @Bindable var vm: LendingViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var showingScanner = false
     var onComplete: () -> Void = {}
 
     var body: some View {
@@ -36,11 +35,6 @@ struct LendingSheet: View {
             } message: {
                 Text(vm.errorMessage ?? "")
             }
-            .fullScreenCover(isPresented: $showingScanner) {
-                ScannerView(mode: .memberCard) { code in
-                    Task { await vm.handleScannedMemberCode(code) }
-                }
-            }
         }
         .presentationDragIndicator(.visible)
         .presentationDetents([.large])
@@ -66,20 +60,6 @@ struct LendingSheet: View {
             .background(Color.appFieldBg, in: RoundedRectangle(cornerRadius: 10))
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-
-            // Kart okut
-            Button {
-                showingScanner = true
-            } label: {
-                Label("Üye Kartı Okut", systemImage: "camera.viewfinder")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Color.appAccent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.appFieldBg, in: RoundedRectangle(cornerRadius: 10))
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
 
             Divider()
 
@@ -214,7 +194,7 @@ struct LendingSheet: View {
 
     private var bookSummaryBanner: some View {
         HStack(spacing: 12) {
-            CoverPlaceholder.compact(title: vm.book.title)
+            BookCover.compact(title: vm.book.title, coverURL: vm.book.coverImageURL)
             VStack(alignment: .leading, spacing: 2) {
                 Text(vm.book.title)
                     .font(.listRowTitle)

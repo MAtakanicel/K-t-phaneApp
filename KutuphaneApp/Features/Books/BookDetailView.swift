@@ -112,7 +112,9 @@ struct BookDetailView: View {
 
     private var headerSection: some View {
         VStack(spacing: 10) {
-            CoverPlaceholder(title: vm.book.title, width: 104, height: 150)
+            BookCover(title: vm.book.title,
+                      coverURL: vm.book.coverImageURL,
+                      width: 104, height: 150)
                 .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
             Text(vm.book.title)
                 .font(.detailHeadline)

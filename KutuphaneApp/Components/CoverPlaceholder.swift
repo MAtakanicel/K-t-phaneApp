@@ -53,6 +53,50 @@ extension CoverPlaceholder {
     }
 }
 
+// MARK: - BookCover (AsyncImage + placeholder fallback)
+// URL varsa AsyncImage; yüklenene kadar CoverPlaceholder; başarısızlıkta da CoverPlaceholder.
+struct BookCover: View {
+    let title: String
+    var coverURL: String? = nil
+    var width: CGFloat = 42
+    var height: CGFloat = 58
+
+    var body: some View {
+        if let coverURL,
+           let trimmed = coverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+                .nilIfEmpty,
+           let url = URL(string: trimmed) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    CoverPlaceholder(title: title, width: width, height: height)
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: width, height: height)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                case .failure:
+                    CoverPlaceholder(title: title, width: width, height: height)
+                @unknown default:
+                    CoverPlaceholder(title: title, width: width, height: height)
+                }
+            }
+            .frame(width: width, height: height)
+        } else {
+            CoverPlaceholder(title: title, width: width, height: height)
+        }
+    }
+
+    static func compact(title: String, coverURL: String? = nil) -> BookCover {
+        BookCover(title: title, coverURL: coverURL, width: 34, height: 46)
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
 #Preview {
     HStack(spacing: 12) {
         CoverPlaceholder(title: "Suç ve Ceza")

@@ -55,7 +55,7 @@ struct BookListRow: View {
         ListRow(
             title: book.title,
             subtitle: book.author,
-            leading: { CoverPlaceholder.compact(title: book.title) },
+            leading: { BookCover.compact(title: book.title, coverURL: book.coverImageURL) },
             trailing: {
                 StatusBadge(bookStatus: book.status, overdueDays: overdueDays)
             }

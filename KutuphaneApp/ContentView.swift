@@ -1,9 +1,3 @@
-//
-//  ContentView.swift
-//  KutuphaneApp
-//
-//  Created by Atakan on 28.06.2026.
-//
 
 import SwiftUI
 
