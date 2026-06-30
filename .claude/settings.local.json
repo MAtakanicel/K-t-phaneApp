@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild build -project \"/Users/atakan/Desktop/Staj Çalışmaları/kütüphane app/KutuphaneApp/KutuphaneApp.xcodeproj\" -scheme KutuphaneApp -destination \"platform=iOS Simulator,id=418C923C-070B-4BBA-93E0-E91E58F566F6\" -quiet)"
+    ]
+  }
+}

@@ -15,9 +15,12 @@ struct BooksTab: View {
 struct BooksScreen: View {
     @Bindable var vm: BooksViewModel
     @State private var observationId = UUID()
+    @State private var showingScanner = false
+    @State private var path = NavigationPath()
+    @State private var scanError: String? = nil
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 Color.appBg.ignoresSafeArea()
                 mainContent
@@ -27,7 +30,10 @@ struct BooksScreen: View {
             .searchable(text: $vm.searchText, prompt: "Kitap veya yazar ara")
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button { /* Faz 6: barkod tarayıcı */ } label: {
+                    Button {
+                        print("[BooksScreen] barcode toolbar tapped → showingScanner=true")
+                        showingScanner = true
+                    } label: {
                         Image(systemName: "barcode.viewfinder")
                     }
                     Button { vm.showingAddForm = true } label: {
@@ -48,9 +54,38 @@ struct BooksScreen: View {
             .sheet(isPresented: $vm.showingAddForm) {
                 BookFormView(vm: BookFormViewModel(bookRepo: vm.bookRepo))
             }
+            .fullScreenCover(isPresented: $showingScanner) {
+                ScannerView(mode: .isbn) { code in
+                    print("[BooksScreen] scanner returned ISBN=\(code)")
+                    Task { await lookupBook(isbn: code) }
+                }
+            }
+            .alert("Kitap bulunamadı", isPresented: Binding(
+                get: { scanError != nil },
+                set: { if !$0 { scanError = nil } }
+            )) {
+                Button("Tamam") { scanError = nil }
+            } message: {
+                Text(scanError ?? "")
+            }
         }
         .tint(Color.appAccent)
         .task(id: observationId) { await vm.observe() }
+    }
+
+    private func lookupBook(isbn: String) async {
+        do {
+            if let book = try await vm.bookRepo.findByISBN(isbn) {
+                print("[BooksScreen] book found → pushing detail")
+                path.append(book)
+            } else {
+                print("[BooksScreen] no book for ISBN=\(isbn)")
+                scanError = "Bu ISBN ile kayıtlı kitap yok: \(isbn)"
+            }
+        } catch {
+            print("[BooksScreen] findByISBN error: \(error)")
+            scanError = error.localizedDescription
+        }
     }
 
     // MARK: - State routing (D4)

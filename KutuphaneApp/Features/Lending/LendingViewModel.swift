@@ -69,6 +69,36 @@ final class LendingViewModel: Identifiable {
         }
     }
 
+    // MARK: - Barkod ile üye bulma
+
+    func handleScannedMemberCode(_ code: String) async {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        let local = members.first(where: { $0.memberNumber == trimmed })
+        do {
+            let member: Member?
+            if let local {
+                member = local
+            } else {
+                let remote = try await memberRepo.findByNumber(trimmed)
+                if let remote, !members.contains(where: { $0.id == remote.id }) {
+                    members.append(remote)
+                }
+                member = remote
+            }
+            guard let member else {
+                errorMessage = "Bu numarayla bir üye bulunamadı: \(trimmed)"
+                return
+            }
+            if let id = member.id, loanCounts[id] == nil {
+                let count = (try? await loanRepo.activeLoans(forMember: id).count) ?? 0
+                loanCounts[id] = count
+            }
+            selectMember(member)
+        } catch {
+            errorMessage = "Üye okunamadı: \(error.localizedDescription)"
+        }
+    }
+
     // MARK: - Üye seçimi
 
     func selectMember(_ member: Member) {

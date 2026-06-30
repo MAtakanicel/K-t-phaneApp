@@ -4,6 +4,7 @@ struct BookFormView: View {
     @Bindable var vm: BookFormViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteAlert = false
+    @State private var showingScanner = false
 
     var body: some View {
         NavigationStack {
@@ -26,7 +27,7 @@ struct BookFormView: View {
                             placeholder: "ISBN numarası",
                             trailingIcon: "barcode.viewfinder"
                         ) {
-                            // Faz 6: barkod tarayıcı bağlanacak
+                            showingScanner = true
                         }
                         FormTextField(label: "Kategori", text: $vm.category,
                                       placeholder: "Roman, Bilim Kurgu…")
@@ -87,6 +88,11 @@ struct BookFormView: View {
                 Button("Tamam") { vm.errorMessage = nil }
             } message: {
                 Text(vm.errorMessage ?? "")
+            }
+            .fullScreenCover(isPresented: $showingScanner) {
+                ScannerView(mode: .isbn) { code in
+                    vm.isbn = code
+                }
             }
         }
         .presentationDragIndicator(.visible)

@@ -7,5 +7,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Kitap ISBN'lerini ve üye kartlarını okumak için kameraya erişim gerekiyor.</string>
 </dict>
 </plist>

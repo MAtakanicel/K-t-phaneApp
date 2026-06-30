@@ -3,6 +3,7 @@ import SwiftUI
 struct LendingSheet: View {
     @Bindable var vm: LendingViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showingScanner = false
     var onComplete: () -> Void = {}
 
     var body: some View {
@@ -35,6 +36,11 @@ struct LendingSheet: View {
             } message: {
                 Text(vm.errorMessage ?? "")
             }
+            .fullScreenCover(isPresented: $showingScanner) {
+                ScannerView(mode: .memberCard) { code in
+                    Task { await vm.handleScannedMemberCode(code) }
+                }
+            }
         }
         .presentationDragIndicator(.visible)
         .presentationDetents([.large])
@@ -61,9 +67,9 @@ struct LendingSheet: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
 
-            // Kart okut (Faz 6 placeholder)
+            // Kart okut
             Button {
-                // Faz 6: barkod okuyucu açılacak
+                showingScanner = true
             } label: {
                 Label("Üye Kartı Okut", systemImage: "camera.viewfinder")
                     .font(.subheadline.weight(.medium))
